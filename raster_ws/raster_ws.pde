@@ -23,7 +23,7 @@ String renderer = P3D;
 
 void setup() {
   //use 2^n to change the dimensions
-  size(1024, 1024, renderer);
+  size(512, 512, renderer);
   scene = new Scene(this);
   if (scene.is3D())
     scene.setType(Scene.Type.ORTHOGRAPHIC);
@@ -79,9 +79,50 @@ void triangleRaster() {
   if (debug) {
     pushStyle();
     stroke(255, 255, 0, 125);
-    point(round(frame.location(v1).x()), round(frame.location(v1).y()));
+    float v1x= (frame.location(v1).x());
+    float v1y= (frame.location(v1).y());
+    float v2x= (frame.location(v2).x());
+    float v2y= (frame.location(v2).y());
+    float v3x= (frame.location(v3).x());
+    float v3y= (frame.location(v3).y());
+    point(0,0);
+    int maxx=round(max(v1x,v2x,v3x));
+    int maxy=round(max(v1y,v2y,v3y));
+    int minx=round(min(v1x,v2x,v3x));
+    int miny=round(min(v1y,v2y,v3y));
+
+    for(int x= minx; x<=maxx; x++){
+      for(int y= miny; y<=maxy; y++){
+        if(isInside(v1x,v1y,v2x,v2y,v3x,v3y,x,y)){
+          rect(x, y,1,1);
+        }
+      }
+    }
+
     popStyle();
   }
+}
+
+
+float edgeFunction(float ax, float ay, float bx, float by, float px, float py) 
+{ 
+  float ppx=px;
+  float ppy=py;
+  return ((ppx - ax) * (by - ay) - (ppy - ay) * (bx - ax)); 
+}
+
+boolean isInside(float ax, float ay, float bx, float by, float cx, float cy, int px, int py){
+  int w1= round(edgeFunction(ax,ay, bx, by, px+0.5, py+0.5)); 
+  int w2= round(edgeFunction(bx, by, cx, cy, px+0.5, py+0.5)); 
+  int w3= round(edgeFunction(cx, cy, ax,ay, px+0.5, py+0.5));
+    
+  float a=(w1+w2+w3)/2;  
+  float c1=(w1*255/a);
+  float c2=(w2*255/a);
+  float c3=(w3*255/a);
+  stroke(c1,c2,c3,125);
+  return (w1 >= 0 && w2 >= 0 && w3 >= 0);
+ 
 }
 
 void randomizeTriangle() {
@@ -98,6 +139,11 @@ void drawTriangleHint() {
   strokeWeight(2);
   stroke(255, 0, 0);
   triangle(v1.x(), v1.y(), v2.x(), v2.y(), v3.x(), v3.y());
+  if(edgeFunction(v1.x(),v1.y(),v2.x(),v2.y(),v3.x(),v3.y())<0){  //orientar
+    Vector vtem=new Vector(v2.x(), v2.y());
+    v2=new Vector(v3.x(), v3.y());
+    v3=new Vector(vtem.x(), vtem.y());
+  }
   strokeWeight(5);
   stroke(0, 255, 255);
   point(v1.x(), v1.y());
